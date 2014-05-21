@@ -25,6 +25,7 @@ struct UPDATE_INFO
 	TCHAR szPath[MAX_PATH];
 	TCHAR szFileVersion[64];
 	TCHAR szProduction[64];
+	BOOL bAutoIncVersion;
 };
 
 void PringUsage()
@@ -85,6 +86,10 @@ bool ParseCmdLine(int _Argc, wchar_t ** _Argv, UPDATE_INFO &UpdateInfo)
 			StringCchCopy(UpdateInfo.szProduction, sizeof(UpdateInfo.szProduction), *++pArg);
 			_tprintf(_T("production version %s\n"), *pArg);
 		}
+		else if (lstrcmpi(*pArg, _T("/a")) == 0)
+		{
+			UpdateInfo.bAutoIncVersion = TRUE;
+		}
 	}
 	return bParseSucc;
 }
@@ -108,15 +113,30 @@ int wmain(int _Argc, wchar_t ** _Argv)
 	
 	CPEResInfo PEInfo;
 	PEInfo.Open(UpdateInfo.szPath);
+	
 
 	DWORD FileVerNums[4] = {}, ProVerNums[4] = {};
 	if (bChangeFileVer)
+	{
 		VerStringToInt(UpdateInfo.szFileVersion, FileVerNums);
+	}
+	else
+	{
+		CPEResInfo::GetFileVersion(UpdateInfo.szPath, &FileVerNums[0], &FileVerNums[1], &FileVerNums[2], &FileVerNums[3]);
+		FileVerNums[3] += 1;
+	}
 	
 	if (bChangeProductionVer)
+	{
 		VerStringToInt(UpdateInfo.szProduction, ProVerNums);
+	}
+	else
+	{
+		CPEResInfo::GetFileVersion(UpdateInfo.szPath, &ProVerNums[0], &ProVerNums[1], &ProVerNums[2], &ProVerNums[3]);
+		ProVerNums[3] += 1;
+	}
 
-	bool bret = PEInfo.UpdateResVersion(bChangeFileVer ? FileVerNums : NULL, bChangeProductionVer ? ProVerNums : NULL);
+	bool bret = PEInfo.UpdateResVersion(FileVerNums, ProVerNums);
 	PEInfo.Close(TRUE);
 	printf("update version %s\n", bret ? "succ" : "failure");
 

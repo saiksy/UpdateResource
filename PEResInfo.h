@@ -64,6 +64,8 @@ public:
 	//设置安装包的类型，可以是静默/带hips/带病毒库/推广等标志位的组合，具体定义见本头文件顶部
 	//具体实现是改写Version资源里的SpecialBulid字段
 	BOOL SetInstallerType(DWORD dwTypeFlag);
+
+	static CString GetFileVersion( const CString& strFilePath, DWORD *pdwV1 /*= 0*/, DWORD *pdwV2 /*= 0*/, DWORD *pdwV3 /*= 0*/, DWORD *pdwV4 /*= 0*/ );
 private:
 	void SendLog(DWORD dwType, LPCWSTR lpDesc);
 	// 为了尽量不干扰BeginUpdateResource等函数的动作，在打开一个PE修改前，先把需要的其他信息都缓存出来
@@ -73,6 +75,7 @@ private:
 	DWORD ResId2GroupId(DWORD dwResId);
 	BOOL InnerUpdateResString();
 	BOOL InnerUpdateVerInfo();
+	
 private:
 	HANDLE m_hExeFile;
 	WCHAR m_szCurExePath[MAX_PATH];

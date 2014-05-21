@@ -18,6 +18,7 @@
 #include <tchar.h>
 #include <stdlib.h>
 #include <strsafe.h>
+#include <atlstr.h>
 // TODO: reference additional headers your program requires here
 
 //{{AFX_INSERT_LOCATION}}

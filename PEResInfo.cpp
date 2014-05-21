@@ -457,6 +457,17 @@ BOOL CPEResInfo::UpdateResVersion(DWORD* arrFileVer, DWORD* arrProdVer)
 			);
 		if (VerQueryValueW(m_verInfo.pData, szQueryCode, (LPVOID*)&pOrigVer, &unInfoLen))
 		{
+			if (wcsstr(pOrigVer, _T(".")))
+			{
+				// 修改可变部分的文件版本字符串
+				StringCbPrintfW(szVerString, sizeof(szVerString)
+					, L"%u\x2E%u\x2E%u\x2E%u"
+					, arrFileVer[0]
+				, arrFileVer[1]
+				, arrFileVer[2]
+				, arrFileVer[3]
+				);
+			}
 			wcsncpy(pOrigVer, szVerString, unInfoLen);
 			if (wcslen(szVerString)>unInfoLen)
 			{
@@ -489,6 +500,17 @@ BOOL CPEResInfo::UpdateResVersion(DWORD* arrFileVer, DWORD* arrProdVer)
 			);
 		if (VerQueryValueW(m_verInfo.pData, szQueryCode, (LPVOID*)&pOrigVer, &unInfoLen))
 		{
+			if (wcsstr(pOrigVer, _T(".")))
+			{
+				// 修改可变部分的文件版本字符串
+				StringCbPrintfW(szVerString, sizeof(szVerString)
+					, L"%u\x2E%u\x2E%u\x2E%u"
+					, arrFileVer[0]
+				, arrFileVer[1]
+				, arrFileVer[2]
+				, arrFileVer[3]
+				);
+			}
 			wcsncpy(pOrigVer, szVerString, unInfoLen);
 			if (wcslen(szVerString)>unInfoLen)
 			{
@@ -610,4 +632,44 @@ BOOL CPEResInfo::SetInstallerType(DWORD dwTypeFlag)
 	{
 	}
 	return bRet;
+}
+
+CString CPEResInfo::GetFileVersion( const CString& strFilePath, DWORD *pdwV1 /*= 0*/, DWORD *pdwV2 /*= 0*/, DWORD *pdwV3 /*= 0*/, DWORD *pdwV4 /*= 0*/ )
+{
+	CString strVersion;
+	if (strFilePath.IsEmpty() || !PathFileExists(strFilePath))
+		return strVersion;
+
+	DWORD dwMajorVersion =0, dwMinorVersion = 0;
+	DWORD dwBuildNumber =0, dwRevisionNumber = 0;
+	DWORD dwHandle = 0;
+	DWORD dwVerInfoSize = GetFileVersionInfoSize(strFilePath, &dwHandle);
+	if (dwVerInfoSize)
+	{
+		LPVOID lpBuffer = LocalAlloc(LPTR, dwVerInfoSize);
+		if (lpBuffer)
+		{
+			if (GetFileVersionInfo(strFilePath, dwHandle, dwVerInfoSize, lpBuffer))
+			{
+				VS_FIXEDFILEINFO * lpFixedFileInfo = NULL;
+				UINT nFixedFileInfoSize = 0;
+				if (VerQueryValue(lpBuffer, TEXT("\\"), (LPVOID*)&lpFixedFileInfo, &nFixedFileInfoSize) &&(nFixedFileInfoSize))
+				{
+					dwMajorVersion = HIWORD(lpFixedFileInfo->dwFileVersionMS); 
+					dwMinorVersion = LOWORD(lpFixedFileInfo->dwFileVersionMS); 
+					dwBuildNumber = HIWORD(lpFixedFileInfo->dwFileVersionLS); 
+					dwRevisionNumber = LOWORD(lpFixedFileInfo->dwFileVersionLS);
+				}
+			}
+			LocalFree(lpBuffer);
+		}
+	}
+
+	strVersion.Format(_T("%d.%d.%d.%d"), dwMajorVersion, dwMinorVersion, dwBuildNumber, dwRevisionNumber);
+	if(pdwV1)	(*pdwV1) = dwMajorVersion;
+	if(pdwV2)	(*pdwV2) = dwMinorVersion;
+	if(pdwV3)	(*pdwV3) = dwBuildNumber;
+	if(pdwV4)	(*pdwV4) = dwRevisionNumber;
+
+	return strVersion;
 }
